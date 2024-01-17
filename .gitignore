@@ -1,0 +1,17 @@
+bin/
+lib/
+
+# Module build files
+.modules.order.cmd
+.Module.symvers.cmd
+modules.order
+Module.symvers
+*.ko
+*.ko.cmd
+*.mod
+*.mod.c
+*.mod.cmd
+*.mod.o
+*.mod.o.cmd
+*.o
+*.o.cmd

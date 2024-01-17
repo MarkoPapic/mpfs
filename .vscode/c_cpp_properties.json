@@ -1,0 +1,43 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "defines": [
+                "__KERNEL__",
+                "MODULE"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}",
+                    "/usr/lib/modules/5.15.0-91-generic/build/arch/arm64/include/",
+                    "/usr/lib/modules/5.15.0-91-generic/build/include/",
+                    "/usr/lib/modules/5.15.0-91-generic/build/arch/arm64/include/generated/",
+                    "/usr/src/linux-headers-5.15.0-91-generic/include"
+                ],
+                "limitSymbolsToIncludedHeaders": false
+            },
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/include",
+                "/usr/local/include",
+                "/usr/lib/modules/5.15.0-91-generic/build/arch/arm64/include/",
+                "/usr/lib/modules/5.15.0-91-generic/build/include/",
+                "/usr/lib/modules/5.15.0-91-generic/build/arch/arm64/include/generated/",
+                "/usr/src/linux-headers-5.15.0-91-generic/include",
+                "/lib/modules/5.15.0-91-generic/build/include",
+                "/usr/lib/gcc/aarch64-linux-gnu/11/include"
+            ],
+            /*"compilerArgs": [
+                "-include",
+                "/usr/src/linux-headers-5.15.0-91-generic/include/linux/kconfig.h",
+                "-include",
+                "/usr/src/linux-headers-5.15.0-91-generic/include/linux/compiler_types.h"
+            ],*/
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
