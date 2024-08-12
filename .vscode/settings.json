@@ -1,0 +1,8 @@
+{
+"C_Cpp.clang_format_sortIncludes": true,
+"files.associations": {
+	"limits": "c",
+	"types.h": "c",
+	"mpfs.h": "c"
+}
+}

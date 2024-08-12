@@ -1,3 +1,42 @@
+# Trying out
+
+Install the kernel module:
+```
+sudo insmod mpfs.ko
+```
+
+Check the registered file systems:
+```
+cat /proc/filesystems | grep mpfs
+```
+
+Check the logs:
+```
+sudo dmesg | tail -4
+```
+
+Create an empty file:
+```
+dd if=/dev/zero of=dev/fake_device bs=1024 count=104857600
+```
+
+Build the `mkfs` tool:
+```
+make mkfs_mpfs
+```
+
+Run `mkfs`:
+```
+./mkfs_mpfs dev/fake_device
+```
+
+Create a `mpfs` directory in `~/media`
+
+Mount the file system:
+```
+sudo mount -t mpfs -o loop dev/fake_device ~/media/mpfs
+```
+
 # Troubleshooting
 
 ## Module verification failed: signature and/or required key missing - tainting kernel

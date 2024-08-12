@@ -1,5 +1,9 @@
 bin/
 lib/
+dev/
+
+.mkfs_mpfs
+mkfs_mpfs
 
 # Module build files
 .modules.order.cmd
