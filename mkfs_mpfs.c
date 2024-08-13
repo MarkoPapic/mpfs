@@ -137,7 +137,7 @@ void fill_super_block(size_t block_size, size_t bytes_per_inode,
 	size_t inode_bm_space =
 		round_to_nearest_multiple(sb->s_inode_bm_size, block_size);
 	size_t metadata_size =
-		DEFAULT_BLOCK_SIZE + block_size + inode_bm_space +
+		MPFS_DEFAULT_BLOCK_SIZE + block_size + inode_bm_space +
 		inode_table_space; // We don't have data bitmap size yet, but that is ok.
 	size_t num_data_blocks = (disk_size - metadata_size) / block_size;
 	sb->s_data_bm_size = num_data_blocks / BITS_IN_BYTE;
@@ -174,7 +174,7 @@ int write_boot_block(int fd)
 {
 	printf("Writing boot block...\n");
 
-	return write_zeroes(fd, DEFAULT_BLOCK_SIZE);
+	return write_zeroes(fd, MPFS_DEFAULT_BLOCK_SIZE);
 }
 
 int write_super_block(int fd, struct mpfs_super_block *sb)
@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
 			goto out;
 		}
 	} else {
-		block_size = DEFAULT_BLOCK_SIZE;
+		block_size = MPFS_DEFAULT_BLOCK_SIZE;
 	}
 
 	if (argc > 3) {

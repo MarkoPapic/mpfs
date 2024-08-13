@@ -19,17 +19,17 @@ int mpfs_fill_super(struct super_block *sb, void *data, int silent)
 	//pr_debug("%s\n", data);
 	pr_debug("Initial block size: %lu\n", sb->s_blocksize);
 
-	if (sb->s_blocksize != DEFAULT_BLOCK_SIZE) {
-		if (!sb_set_blocksize(sb, DEFAULT_BLOCK_SIZE)) {
+	if (sb->s_blocksize != MPFS_DEFAULT_BLOCK_SIZE) {
+		if (!sb_set_blocksize(sb, MPFS_DEFAULT_BLOCK_SIZE)) {
 			pr_err("MPFS: unable to set block size to %u",
-			       DEFAULT_BLOCK_SIZE);
+			       MPFS_DEFAULT_BLOCK_SIZE);
 			goto out;
 		}
 	}
 
 	pr_debug("Default block size to %lu\n", sb->s_blocksize);
 
-	if (!(bh = sb_bread(sb, SB_DEFAULT_BLOCK_NUMBER))) {
+	if (!(bh = sb_bread(sb, MPFS_SB_DEFAULT_BLOCK_NUMBER))) {
 		pr_err("MPFS: failed to read the superblock");
 		goto out;
 	}
