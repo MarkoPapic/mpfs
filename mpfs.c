@@ -17,20 +17,23 @@ int mpfs_fill_super(struct super_block *sb, void *data, int silent)
 
 	pr_debug("Mounting mpfs...\n");
 	//pr_debug("%s\n", data);
-	pr_debug("Initial block size: %lu\n", sb->s_blocksize);
+	pr_debug("Initial block size: %luB %lub\n", sb->s_blocksize,
+		 sb->s_blocksize_bits);
 
 	if (sb->s_blocksize != MPFS_DEFAULT_BLOCK_SIZE) {
 		if (!sb_set_blocksize(sb, MPFS_DEFAULT_BLOCK_SIZE)) {
 			pr_err("MPFS: unable to set block size to %u",
 			       MPFS_DEFAULT_BLOCK_SIZE);
+			ret = -EINVAL;
 			goto out;
 		}
 	}
 
-	pr_debug("Default block size to %lu\n", sb->s_blocksize);
+	pr_debug("Default block size to %luB\n", sb->s_blocksize);
 
 	if (!(bh = sb_bread(sb, MPFS_SB_DEFAULT_BLOCK_NUMBER))) {
 		pr_err("MPFS: failed to read the superblock");
+		ret = -EIO;
 		goto out;
 	}
 
@@ -38,21 +41,28 @@ int mpfs_fill_super(struct super_block *sb, void *data, int silent)
 
 	if (ms->s_magic != MPFS_SUPER_MAGIC) {
 		pr_err("MPFS: unexpected magic number");
+		ret = -EINVAL;
 		goto out;
 	}
 
-	/*
-	pr_debug("Magic: %u\n", ms->s_magic);
+	sb->s_max_links = MPFS_MAX_LINKS;
+	sb->s_time_min = 0;
+	sb->s_time_max = U32_MAX;
+
+	// TODO: Set sb->s_maxbytes
+
+	// TODO: Set sb->s_fs_info
+	// TODO: Set sb->s_op
+	// TODO: Create and set sb->s_root
+
+	/*pr_debug("Magic: %u\n", ms->s_magic);
 	pr_debug("Disk size: %uMB\n", ms->s_disk_size_mb);
 	pr_debug("Block size log: %u\n", ms->s_block_size_log);
 	pr_debug("Data blocks: %llu\n", ms->s_num_data_blocks);
 	pr_debug("Data bitmap size: %uKB\n", ms->s_data_bm_size / 1024);
-	pr_debug("Inode bitmap size: %uB\n", ms->s_inode_bm_size);
-	*/
+	pr_debug("Inode bitmap size: %uB\n", ms->s_inode_bm_size);*/
 
-	//pr_debug("Final block size to %lu\n", sb->s_blocksize);
-
-	//if (!(bh = sb_bread(s)))
+	pr_debug("Final block size %lu\n", sb->s_blocksize);
 
 out:
 	// Clean up the allocated memory

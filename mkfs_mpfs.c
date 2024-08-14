@@ -71,20 +71,7 @@ unsigned long round_to_nearest_multiple(unsigned long n, unsigned long m)
 	}
 }
 
-/*void *malloc_char(size_t size)
-{
-	char *p;
-
-	p = malloc(size);
-	if (!p) {
-		perror("failed to allocate a buffer");
-		exit(EXIT_FAILURE);
-	}
-
-	return p;
-}
-
-int print_file_bytes(int fd, size_t size, size_t buf_size)
+/*int print_file_bytes(int fd, size_t size, size_t buf_size)
 {
 	int ret = 0;
 	size_t read = 0;
@@ -111,7 +98,7 @@ int get_device_size(int fd, size_t *size)
 {
 	//return ioctl(fd, BLKGETSIZE64, size);
 
-	// TODO: Figure out why you are getting "Inapropriate ioctl for device"
+	// FIXME: Figure out why you are getting "Inapropriate ioctl for device"
 	*size = 104857600;
 
 	return 0;
@@ -120,8 +107,6 @@ int get_device_size(int fd, size_t *size)
 void fill_super_block(size_t block_size, size_t bytes_per_inode,
 		      size_t disk_size, struct mpfs_super_block *sb)
 {
-	const size_t inode_size = 128;
-
 	sb->s_magic = MPFS_SUPER_MAGIC;
 	sb->s_disk_size_mb = disk_size / KB_MULTILPIER / KB_MULTILPIER;
 	sb->s_block_size_log = (unsigned char)log2(
@@ -130,7 +115,7 @@ void fill_super_block(size_t block_size, size_t bytes_per_inode,
 	size_t max_num_inodes = disk_size / bytes_per_inode;
 	sb->s_inode_table_size =
 		max_num_inodes *
-		inode_size; // TODO: Ensure this is little endian
+		MPFS_INODE_SIZE_BYTES; // TODO: Ensure this is little endian
 	size_t inode_table_space =
 		round_to_nearest_multiple(sb->s_inode_table_size, block_size);
 	sb->s_inode_bm_size = max_num_inodes / BITS_IN_BYTE;
@@ -172,7 +157,7 @@ void fill_super_block(size_t block_size, size_t bytes_per_inode,
 
 int write_boot_block(int fd)
 {
-	printf("Writing boot block...\n");
+	printf("Writing boot block (%dB)...\n", MPFS_DEFAULT_BLOCK_SIZE);
 
 	return write_zeroes(fd, MPFS_DEFAULT_BLOCK_SIZE);
 }
@@ -183,11 +168,77 @@ int write_super_block(int fd, struct mpfs_super_block *sb)
 
 	printf("Writing superblock (%luB)...\n", size);
 
+	off_t seek_res = lseek(fd, MPFS_DEFAULT_BLOCK_SIZE, SEEK_SET);
+	if (seek_res == -1) {
+		perror("seek failed\n");
+		return -1;
+	}
+
 	if (write(fd, sb, size) != size) {
 		return -1;
 	}
 
 	return 0;
+}
+
+int write_data_bitmap(int fd, struct mpfs_super_block *sb)
+{
+	size_t block_size =
+		pow(2, sb->s_block_size_log) * BLOCK_SIZE_MULTIPLIER;
+	size_t data_bm_space =
+		round_to_nearest_multiple(sb->s_data_bm_size, block_size);
+
+	printf("Writing data bitmap (%luB)...\n", data_bm_space);
+
+	off_t seek_res = lseek(fd, 2 * MPFS_DEFAULT_BLOCK_SIZE, SEEK_SET);
+	if (seek_res == -1) {
+		perror("seek failed\n");
+		return -1;
+	}
+
+	return write_zeroes(fd, data_bm_space);
+}
+
+int write_inode_bitmap(int fd, struct mpfs_super_block *sb)
+{
+	size_t block_size =
+		pow(2, sb->s_block_size_log) * BLOCK_SIZE_MULTIPLIER;
+	size_t data_bm_space =
+		round_to_nearest_multiple(sb->s_data_bm_size, block_size);
+	size_t inode_bm_space =
+		round_to_nearest_multiple(sb->s_inode_bm_size, block_size);
+
+	printf("Writing inode bitmap (%luB)...\n", inode_bm_space);
+
+	off_t seek_res = lseek(fd, 2 * MPFS_DEFAULT_BLOCK_SIZE + data_bm_space, SEEK_SET);
+	if (seek_res == -1) {
+		perror("seek failed\n");
+		return -1;
+	}
+
+	return write_zeroes(fd, inode_bm_space);
+}
+
+int write_inode_table(int fd, struct mpfs_super_block *sb)
+{
+	size_t block_size =
+		pow(2, sb->s_block_size_log) * BLOCK_SIZE_MULTIPLIER;
+	size_t inode_table_space =
+		round_to_nearest_multiple(sb->s_inode_table_size, block_size);
+	size_t data_bm_space =
+		round_to_nearest_multiple(sb->s_data_bm_size, block_size);
+	size_t inode_bm_space =
+		round_to_nearest_multiple(sb->s_inode_bm_size, block_size);
+
+	printf("Writing inode table (%luB)...\n", inode_table_space);
+
+	off_t seek_res = lseek(fd, 2 * MPFS_DEFAULT_BLOCK_SIZE + data_bm_space + inode_bm_space, SEEK_SET);
+	if (seek_res == -1) {
+		perror("seek failed\n");
+		return -1;
+	}
+
+	return write_zeroes(fd, inode_table_space);
 }
 
 int main(int argc, char *argv[])
@@ -267,7 +318,23 @@ int main(int argc, char *argv[])
 		goto out;
 	}
 
-	// TODO: Seek to 2 * DEFAULT_BLOCK_SIZE
+	if (write_data_bitmap(fd, &sb) != 0) {
+		perror("failed to write data bitmap\n");
+		ret = -1;
+		goto out;
+	}
+
+	if (write_inode_bitmap(fd, &sb) != 0) {
+		perror("failed to write inode bitmap\n");
+		ret = -1;
+		goto out;
+	}
+
+	if (write_inode_table(fd, &sb) != 0) {
+		perror("failed to write inode table\n");
+		ret = -1;
+		goto out;
+	}
 
 	goto out;
 
